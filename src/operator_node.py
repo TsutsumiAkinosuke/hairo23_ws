@@ -9,6 +9,7 @@ import sys
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy, QoSPresetProfiles, QoSProfile
 
 from sensor_msgs.msg import Joy
 from custom_interfaces.msg import RobotCommand
@@ -40,8 +41,11 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.cable_length = 0.0
         self.timer_reset_button.clicked.connect(self.reset_timer)
         self.log_reset_button.clicked.connect(self.reset_log)
-        self.eject_button.clicked.connect(self.eject_cable)
-        self.windup_button.clicked.connect(self.windup_cable)
+        self.release_button.pressed.connect(self.pressed_release)
+        self.release_button.released.connect(self.released_release)
+        self.windup_button.pressed.connect(self.pressed_windup)
+        self.windup_button.released.connect(self.released_windup)
+        self.inverse_button.clicked.connect(self.inverse_direction)
 
         # ノードの初期化
         rclpy.init(args=None)
@@ -51,15 +55,20 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.joy_subscription = self.node.create_subscription(Joy, "joy", self.joy_callback, 10)
         self.joy = Joy()
 
-        # 変換コマンドのパブリッシャを定義
+        # RobotCommandのパブリッシャを定義
         self.cmd_publisher = self.node.create_publisher(RobotCommand, "cmd", 10)
         self.rf_mode = False # True:サブ昇降・False:メイン昇降
         self.decon_auto = False # 自動除染ON/OFF
         self.cmd = RobotCommand()
 
-        # ロボット情報のサブスクライバを定義
-        self.info_subscription = self.node.create_subscription(RobotInfo, "info", self.info_callback, 10)
+        # RobotInfoのサブスクライバを定義
+        self.info_subscription = self.node.create_subscription(RobotInfo, "info", self.info_callback, qos_profile=QoSPresetProfiles.SENSOR_DATA.value)
         self.robot_info = RobotInfo()
+
+        # LimitSwitchのサブスクライバを定義
+        self.ls_subscription = self.node.create_subscription(LimitSwitch, "ls", self.ls_callback, qos_profile=QoSPresetProfiles.SENSOR_DATA.value)
+        self.ls = LimitSwitch()
+        self.pre_ls = LimitSwitch()
 
         # タイマー設定
         self.start_time = time.time()
@@ -72,6 +81,10 @@ class OperatorNode(QtWidgets.QMainWindow):
         # コントローラ用変数・マクロ
 
         self.pre_buttons = [False]*12
+        self.is_forward = True
+        self.windup_flag = False
+        self.release_flag = False
+        self.is_controlled = False
 
         self.AXES_JOY_LX = 0
         self.AXES_JOY_LY = 1
@@ -111,6 +124,30 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.DECON_RIGHT = 7
         self.CABLE_WIND = 8
         self.CABLE_RELEASE = 9
+
+        self.LS_ELECAS_FORWARD_TOP     = 0
+        self.LS_ELECAS_FORWARD_BOTTOM  = 1
+        self.LS_ELECAS_BACK_TOP        = 2
+        self.LS_ELECAS_BACK_BOTTOM     = 3
+        self.LS_RF_MAIN_TOP            = 4
+        self.LS_RF_MAIN_BOTTOM         = 5
+        self.LS_RF_SUB_TOP             = 6
+        self.LS_RF_SUB_BOTTOM          = 7
+        self.LS_DECON_LEFT             = 8
+        self.LS_DECON_RIGHT            = 9
+
+        self.ls_dict = {
+                        self.LS_ELECAS_FORWARD_TOP:"前方エレキャス上",
+                        self.LS_ELECAS_FORWARD_BOTTOM:"前方エレキャス下",
+                        self.LS_ELECAS_BACK_TOP:"後方エレキャス上",
+                        self.LS_ELECAS_BACK_BOTTOM:"後方エレキャス下",
+                        self.LS_RF_MAIN_TOP:"メイン昇降上",
+                        self.LS_RF_MAIN_BOTTOM:"メイン昇降下",
+                        self.LS_RF_SUB_TOP:"サブ昇降上",
+                        self.LS_RF_SUB_BOTTOM:"サブ昇降下",
+                        self.LS_DECON_LEFT:"除染機構左",
+                        self.LS_DECON_RIGHT:"除染機構右"
+                        }
     
     def ros_spin(self):
         rclpy.spin_once(self.node, timeout_sec=0.01)
@@ -124,8 +161,12 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.joy = msg
 
         # ジョイスティック
-        self.cmd.value[0] = max(-127, min(127, int(self.joy.axes[1]*127)))  # left-y
-        self.cmd.value[1] = max(-127, min(127, int(self.joy.axes[3]*127)))  # right-x
+        if self.is_forward is True:
+            self.cmd.value[0] = max(-127, min(127, int(self.joy.axes[1]*127)))  # left-y
+            self.cmd.value[1] = max(-127, min(127, int(self.joy.axes[3]*127)))  # right-x
+        else:
+            self.cmd.value[0] = max(-127, min(127, int(self.joy.axes[1]*127))) * -1 # left-y
+            self.cmd.value[1] = max(-127, min(127, int(self.joy.axes[3]*127)))  # right-x
 
         # 昇降モード
         if self.pre_buttons[self.BTN_L2] == False and self.joy.buttons[self.BTN_L2] == True: # L2ボタンが押されたとき
@@ -148,53 +189,120 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.cmd.mode[self.DECON_LEFT] = bool(self.joy.buttons[self.BTN_L1])  # 除染機構を左へ移動
         self.cmd.mode[self.DECON_RIGHT] = bool(self.joy.buttons[self.BTN_R1]) # 除染機構を右へ移動
 
-        if self.joy.axes[self.AXES_LR] == 1:    # 左ボタンが押されているなら
-            self.cmd.mode[self.CABLE_WIND] = True
-            self.cmd.mode[self.CABLE_RELEASE] = False
-        elif self.joy.axes[self.AXES_LR] == -1:  # 右ボタンが押されているなら
-            self.cmd.mode[self.CABLE_WIND] = False
-            self.cmd.mode[self.CABLE_RELEASE] = True
-        else:                                   # 左右ボタンが押されていなければ
-            self.cmd.mode[self.CABLE_WIND] = False
-            self.cmd.mode[self.CABLE_RELEASE] = False
+        # ケーブル
+
+        # ケーブル長がUIによって操作されていなければ
+        if self.is_controlled == False:
+            if self.joy.axes[self.AXES_LR] == 1:
+                # 左ボタンが押されているならケーブル巻取りオン・排出オフ
+                self.windup_flag = True
+                self.release_flag = False
+            elif self.joy.axes[self.AXES_LR] == -1:
+                # 右ボタンが押されているならケーブル巻取りオフ・排出オン
+                self.windup_flag = False
+                self.release_flag = True
+            else:
+                # 左右ボタンが押されていなければケーブル巻取りオフ・排出オフ
+                self.windup_flag = False
+                self.release_flag = False
         
+        self.cmd.mode[self.CABLE_WIND] = self.windup_flag
+        self.cmd.mode[self.CABLE_RELEASE] = self.release_flag
+
         # エレキャス
-        if self.pre_buttons[self.BTN_TRIANGLE] == False and self.joy.buttons[self.BTN_TRIANGLE] == True: # 三角ボタンが押されたとき
+
+        # 三角ボタンが押されたとき前方エレキャスの展開・格納モードを切り替え
+        if self.pre_buttons[self.BTN_TRIANGLE] == False and self.joy.buttons[self.BTN_TRIANGLE] == True:
             self.cmd.mode[self.ELECAS_FORWARD] = not self.cmd.mode[self.ELECAS_FORWARD]
 
+        # バツボタンが押されたとき前方エレキャスの展開・格納モードを切り替え
         if self.pre_buttons[self.BTN_CROSS] == False and self.joy.buttons[self.BTN_CROSS] == True: # バツボタンが押されたとき
             self.cmd.mode[self.ELECAS_BACK] = not self.cmd.mode[self.ELECAS_BACK]
 
+        # RobotCommandメッセージをパブリッシュ
         self.cmd_publisher.publish(self.cmd)
 
+        # 1ループ前のコントローラの情報として保存
         self.pre_buttons = self.joy.buttons
     
     # RobotInfoメッセージ受信時のコールバック
     def info_callback(self, msg):
 
+        # メッセージをメンバ変数に代入
         self.robot_info = msg
 
-    # タイマーをリセット
+        # 7セグにケーブルの排出長さ(cm)を表示
+        self.cable_length_segment.setProperty("value", self.robot_info.cable_length)
+    
+    def ls_callback(self, msg):
+
+        self.ls = msg
+
+        for i in range(10):
+            if self.ls.ls[i] is not self.pre_ls.ls[i]:
+                self.timeline.append("{}:{} | {}のリミットスイッチが押されました".format(self.current_min, self.current_sec, self.ls_dict[i]))
+
+        self.pre_ls = self.ls
+
+    # タイマーリセットボタン押下時のコールバック
     def reset_timer(self):
 
+        # タイマーをリセット
         self.start_time = time.time()
 
-    # タイムラインをリセット
+    # ログリセットボタンクリック時のコールバック
     def reset_log(self):
 
+        # タイムラインのログをリセット
         self.timeline.clear()
-    
-    # ケーブルを排出してセグメントの表示を更新
-    def eject_cable(self):
 
-        self.cable_length += 0.25
-        self.cable_length_segment.setProperty("value", self.cable_length)
-    
-    # ケーブルを巻き取ってセグメントの表示を更新
-    def windup_cable(self):
+    # 排出ボタン押下時のコールバック
+    def pressed_release(self):
 
-        self.cable_length -= 0.25
-        self.cable_length_segment.setProperty("value", self.cable_length)
+        # 排出フラグをオンにする
+        self.release_flag = True
+
+        # 巻取りフラグをオフにする
+        self.windup_flag = False
+
+        # ケーブル長がUIによって操作されているフラグをオンにする
+        self.is_controlled = True
+    
+    # 排出ボタン引上時のコールバック
+    def released_release(self):
+
+        # 排出フラグをオフにする
+        self.release_flag = False
+
+        # ケーブル長がUIによって操作されているフラグをオフにする
+        self.is_controlled = False
+    
+    # 巻取りボタン押下時のコールバック
+    def pressed_windup(self):
+
+        # 巻取りフラグをオンにする
+        self.windup_flag = True
+
+        # 排出フラグをオフにする
+        self.release_flag = False
+
+        # ケーブル長がUIによって操作されているフラグをオンにする
+        self.is_controlled = True
+    
+    # 巻取りボタン引上時のコールバック
+    def released_windup(self):
+
+        # 巻取りフラグをオフにする
+        self.windup_flag = False
+
+        # ケーブル長がUIによって操作されているフラグをオフにする
+        self.is_controlled = False
+
+    # 動作反転ボタン押下時のコールバック
+    def inverse_direction(self):
+
+        # クローラーの動作を反転させる
+        self.is_forward = not self.is_forward
     
     def update_timer(self):
         # タイマーの時間を更新
@@ -254,7 +362,7 @@ class OperatorNode(QtWidgets.QMainWindow):
     
     def setupUi(self):
         self.setObjectName("MainWindow")
-        self.resize(800, 600)
+        self.resize(960, 1080)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.joy_left_xline = QtWidgets.QFrame(self.centralwidget)
@@ -409,6 +517,12 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
 
+        # 操作反転ボタン
+        self.inverse_button = QtWidgets.QPushButton(self.centralwidget)
+        self.inverse_button.setGeometry(QtCore.QRect(530, 20, 111, 25))
+        self.inverse_button.setFont(font)
+        self.inverse_button.setObjectName("inverse_button")
+
         # 巻取ボタン
         self.windup_button = QtWidgets.QPushButton(self.centralwidget)
         self.windup_button.setGeometry(QtCore.QRect(20, 170, 141, 61))
@@ -416,16 +530,15 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.windup_button.setObjectName("windup_button")
 
         # 排出ボタン
-        self.eject_button = QtWidgets.QPushButton(self.centralwidget)
-        self.eject_button.setGeometry(QtCore.QRect(20, 100, 141, 61))
-        self.eject_button.setFont(font)
-        self.eject_button.setObjectName("eject_button")
+        self.release_button = QtWidgets.QPushButton(self.centralwidget)
+        self.release_button.setGeometry(QtCore.QRect(20, 100, 141, 61))
+        self.release_button.setFont(font)
+        self.release_button.setObjectName("release_button")
 
         # ケーブル長セグメント
         self.cable_length_segment = QtWidgets.QLCDNumber(self.centralwidget)
         self.cable_length_segment.setGeometry(QtCore.QRect(20, 20, 141, 71))
-        self.cable_length_segment.setDigitCount(4)
-        self.cable_length_segment.setProperty("value", 0.0)
+        self.cable_length_segment.setProperty("value", 0)
         self.cable_length_segment.setObjectName("cable_length_segment")
 
         # タイマーリセットボタン
@@ -504,7 +617,8 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.timer_reset_button.setText(self.translate("MainWindow", "TimerReset"))
         self.log_reset_button.setText(self.translate("MainWindow", "LogReset"))
         self.windup_button.setText(self.translate("MainWindow", "巻取"))
-        self.eject_button.setText(self.translate("MainWindow", "排出"))
+        self.release_button.setText(self.translate("MainWindow", "排出"))
+        self.inverse_button.setText(self.translate("MainWindow", "操作反転"))
 
 def ros_main(args=None):
 
