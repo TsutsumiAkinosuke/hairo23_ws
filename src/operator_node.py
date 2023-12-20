@@ -189,8 +189,6 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.cmd.mode[self.DECON_LEFT] = bool(self.joy.buttons[self.BTN_L1])  # 除染機構を左へ移動
         self.cmd.mode[self.DECON_RIGHT] = bool(self.joy.buttons[self.BTN_R1]) # 除染機構を右へ移動
 
-        # ケーブル
-
         # ケーブル長がUIによって操作されていなければ
         if self.is_controlled == False:
             if self.joy.axes[self.AXES_LR] == 1:
@@ -312,6 +310,7 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.current_min = int(self.current_time / 60)
         self.current_sec = self.current_time % 60
         self.running_timer.setTime(QtCore.QTime(0, self.current_min, self.current_sec))
+        self.timer_bar.setProperty("value", min(100, int(self.current_time / 6)))
 
     def update_view(self):
 
@@ -355,6 +354,26 @@ class OperatorNode(QtWidgets.QMainWindow):
 
         except:
             pass
+        
+        if self.cmd.mode[self.DECON_AUTO] == True:
+            self.decon_mode_label.setText(self.translate("MainWindow", "除染モード：自動"))
+        else:
+            self.decon_mode_label.setText(self.translate("MainWindow", "除染モード：手動"))
+        
+        if self.cmd.mode[self.RF_MODE] == True:
+            self.rf_mode_label.setText(self.translate("MainWindow", "昇降モード：サブ"))
+        else:
+            self.rf_mode_label.setText(self.translate("MainWindow", "昇降モード：メイン"))
+        
+        if self.cmd.mode[self.ELECAS_BACK] == True:
+            self.elecas_back_label.setText(self.translate("MainWindow", "後足：展開"))
+        else:
+            self.elecas_back_label.setText(self.translate("MainWindow", "後足：格納"))
+        
+        if self.cmd.mode[self.ELECAS_FORWARD] == True:
+            self.elecas_forward_label.setText(self.translate("MainWindow", "前足：展開"))
+        else:
+            self.elecas_forward_label.setText(self.translate("MainWindow", "前足：格納"))
     
     # def checkbutton_callback(self, state):
     #     if state == QtCore.Qt.Checked:
@@ -646,9 +665,12 @@ class OperatorNode(QtWidgets.QMainWindow):
 
         # ロボット画像
         self.robot_image_label = QtWidgets.QLabel(self.centralwidget)
-        self.robot_image_label.setGeometry(QtCore.QRect(120, 80, 211, 551))
+        self.robot_image_label.setGeometry(QtCore.QRect(120, 80, 200, 550))
         self.robot_image_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.robot_image_label.setObjectName("robot_image_label")
+        self.robot_pixmap = QtGui.QPixmap("sample.png")
+        self.robot_pixmap = self.robot_pixmap.scaled(200, 550)
+        self.robot_image_label.setPixmap(self.robot_pixmap)
 
         self.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(self)
@@ -701,7 +723,6 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.inverse_button.setText(self.translate("MainWindow", "操作反転"))
         self.csv_output_button.setText(self.translate("MainWindow", "CSV出力"))
         self.control_mode_label.setText(self.translate("MainWindow", "前進モード"))
-        self.robot_image_label.setText(self.translate("MainWindow", "robot_image"))
         self.elecas_back_label.setText(self.translate("MainWindow", "後足：格納"))
         self.elecas_forward_label.setText(self.translate("MainWindow", "前足：格納"))
         self.rf_mode_label.setText(self.translate("MainWindow", "昇降モード：メイン"))
