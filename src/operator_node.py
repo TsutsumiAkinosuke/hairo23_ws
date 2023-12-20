@@ -240,7 +240,9 @@ class OperatorNode(QtWidgets.QMainWindow):
 
         for i in range(10):
             if self.ls.ls[i] is not self.pre_ls.ls[i]:
-                self.timeline.append("{}:{} | {}のリミットスイッチが押されました".format(self.current_min, self.current_sec, self.ls_dict[i]))
+                text = str(self.current_min).zfill(2)+":"+str(self.current_sec).zfill(2)+" | "+self.ls_dict[i]+"のリミットスイッチが押されました"
+                self.timeline.append(text)
+                print(text)
 
         self.pre_ls = self.ls
 
@@ -315,8 +317,8 @@ class OperatorNode(QtWidgets.QMainWindow):
 
         try:
             # UI上のジョイスティックを移動させる
-            self.joy_left.move(250-int(self.joy.axes[0]*20), 430-int(self.joy.axes[1]*20))
-            self.joy_right.move(450-int(self.joy.axes[3]*20), 430-int(self.joy.axes[4]*20))
+            self.joy_left.move(310-int(self.joy.axes[0]*30), 840-int(self.joy.axes[1]*30))
+            self.joy_right.move(530-int(self.joy.axes[3]*30), 840-int(self.joy.axes[4]*30))
 
             # Lx ~ R2までの値をラベルに表示
             for i in range(6):
@@ -365,33 +367,36 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.resize(960, 1080)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
+
+        # ジョイスティック左
         self.joy_left_xline = QtWidgets.QFrame(self.centralwidget)
-        self.joy_left_xline.setGeometry(QtCore.QRect(230, 480, 140, 3))
+        self.joy_left_xline.setGeometry(QtCore.QRect(279, 900, 180, 3))
         self.joy_left_xline.setFrameShape(QtWidgets.QFrame.HLine)
         self.joy_left_xline.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.joy_left_xline.setObjectName("joy_left_xline")
         self.joy_left_yline = QtWidgets.QFrame(self.centralwidget)
-        self.joy_left_yline.setGeometry(QtCore.QRect(300, 410, 3, 140))
+        self.joy_left_yline.setGeometry(QtCore.QRect(370, 810, 3, 180))
         self.joy_left_yline.setFrameShape(QtWidgets.QFrame.VLine)
         self.joy_left_yline.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.joy_left_yline.setObjectName("joy_left_yline")
         self.joy_left = QtWidgets.QDial(self.centralwidget)
-        self.joy_left.setGeometry(QtCore.QRect(250, 430, 100, 100))
+        self.joy_left.setGeometry(QtCore.QRect(310, 840, 120, 120))
         self.joy_left.setWrapping(True)
         self.joy_left.setObjectName("joy_left")
 
+        # ジョイスティック右
         self.joy_right_yline = QtWidgets.QFrame(self.centralwidget)
-        self.joy_right_yline.setGeometry(QtCore.QRect(500, 410, 3, 140))
+        self.joy_right_yline.setGeometry(QtCore.QRect(590, 810, 3, 180))
         self.joy_right_yline.setFrameShape(QtWidgets.QFrame.VLine)
         self.joy_right_yline.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.joy_right_yline.setObjectName("joy_right_yline")
         self.joy_right_xline = QtWidgets.QFrame(self.centralwidget)
-        self.joy_right_xline.setGeometry(QtCore.QRect(430, 480, 140, 3))
+        self.joy_right_xline.setGeometry(QtCore.QRect(500, 900, 180, 3))
         self.joy_right_xline.setFrameShape(QtWidgets.QFrame.HLine)
         self.joy_right_xline.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.joy_right_xline.setObjectName("joy_right_xline")
         self.joy_right = QtWidgets.QDial(self.centralwidget)
-        self.joy_right.setGeometry(QtCore.QRect(450, 430, 100, 100))
+        self.joy_right.setGeometry(QtCore.QRect(530, 840, 120, 120))
         self.joy_right.setWrapping(True)
         self.joy_right.setObjectName("joy_right")
 
@@ -399,178 +404,253 @@ class OperatorNode(QtWidgets.QMainWindow):
         font.setPointSize(14)
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[0].setGeometry(QtCore.QRect(260, 360, 81, 21))
+        self.label[0].setGeometry(QtCore.QRect(330, 760, 81, 21))
         self.label[0].setFont(font)
         self.label[0].setAlignment(QtCore.Qt.AlignCenter)
         self.label[0].setObjectName("joy_left_xlabel")
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[1].setGeometry(QtCore.QRect(260, 380, 81, 21))
+        self.label[1].setGeometry(QtCore.QRect(330, 780, 81, 21))
         self.label[1].setFont(font)
         self.label[1].setAlignment(QtCore.Qt.AlignCenter)
         self.label[1].setObjectName("joy_left_ylabel")
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[2].setGeometry(QtCore.QRect(170, 285, 81, 21))
+        self.label[2].setGeometry(QtCore.QRect(160, 680, 91, 21))
         self.label[2].setFont(font)
         self.label[2].setAlignment(QtCore.Qt.AlignCenter)
         self.label[2].setObjectName("l2_label")
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[3].setGeometry(QtCore.QRect(460, 360, 81, 21))
+        self.label[3].setGeometry(QtCore.QRect(550, 760, 81, 21))
         self.label[3].setFont(font)
         self.label[3].setAlignment(QtCore.Qt.AlignCenter)
         self.label[3].setObjectName("joy_right_xlabel")
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[4].setGeometry(QtCore.QRect(460, 380, 81, 21))
+        self.label[4].setGeometry(QtCore.QRect(550, 780, 81, 21))
         self.label[4].setFont(font)
         self.label[4].setAlignment(QtCore.Qt.AlignCenter)
         self.label[4].setObjectName("joy_right_ylabel")
 
         self.label.append(QtWidgets.QLabel(self.centralwidget))
-        self.label[5].setGeometry(QtCore.QRect(560, 285, 81, 21))
+        self.label[5].setGeometry(QtCore.QRect(706, 680, 81, 21))
         self.label[5].setFont(font)
         self.label[5].setAlignment(QtCore.Qt.AlignCenter)
         self.label[5].setObjectName("r2_label")
 
         # 矢印ボタン
 
+        font = QtGui.QFont()
+        font.setPointSize(18)
+
         self.up_button = QtWidgets.QPushButton(self.centralwidget)
-        self.up_button.setGeometry(QtCore.QRect(100, 370, 51, 51))
+        self.up_button.setGeometry(QtCore.QRect(90, 780, 61, 61))
         self.up_button.setFont(font)
         self.up_button.setObjectName("up_button")
 
         self.down_button = QtWidgets.QPushButton(self.centralwidget)
-        self.down_button.setGeometry(QtCore.QRect(100, 490, 51, 51))
+        self.down_button.setGeometry(QtCore.QRect(90, 920, 61, 61))
         self.down_button.setFont(font)
         self.down_button.setObjectName("down_button")
 
         self.right_button = QtWidgets.QPushButton(self.centralwidget)
-        self.right_button.setGeometry(QtCore.QRect(160, 430, 51, 51))
+        self.right_button.setGeometry(QtCore.QRect(160, 850, 61, 61))
         self.right_button.setFont(font)
         self.right_button.setObjectName("right_button")
 
         self.left_button = QtWidgets.QPushButton(self.centralwidget)
-        self.left_button.setGeometry(QtCore.QRect(40, 430, 51, 51))
+        self.left_button.setGeometry(QtCore.QRect(20, 850, 61, 61))
         self.left_button.setFont(font)
         self.left_button.setObjectName("left_button")
 
-        font = QtGui.QFont()
-        font.setPointSize(14)
-
         # ボタン
 
+        font = QtGui.QFont()
+        font.setPointSize(18)
+
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[0].setGeometry(QtCore.QRect(650, 490, 51, 51))
+        self.qt_buttons[0].setGeometry(QtCore.QRect(810, 920, 61, 61))
         self.qt_buttons[0].setFont(font)
         self.qt_buttons[0].setObjectName("cross_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[1].setGeometry(QtCore.QRect(710, 430, 51, 51))
+        self.qt_buttons[1].setGeometry(QtCore.QRect(880, 850, 61, 61))
         self.qt_buttons[1].setFont(font)
         self.qt_buttons[1].setObjectName("circle_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[2].setGeometry(QtCore.QRect(650, 370, 51, 51))
+        self.qt_buttons[2].setGeometry(QtCore.QRect(810, 780, 61, 61))
         self.qt_buttons[2].setFont(font)
         self.qt_buttons[2].setObjectName("triangle_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[3].setGeometry(QtCore.QRect(590, 430, 51, 51))
+        self.qt_buttons[3].setGeometry(QtCore.QRect(740, 850, 61, 61))
         self.qt_buttons[3].setFont(font)
         self.qt_buttons[3].setObjectName("square_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[4].setGeometry(QtCore.QRect(90, 320, 71, 31))
+        self.qt_buttons[4].setGeometry(QtCore.QRect(80, 720, 81, 41))
         self.qt_buttons[4].setFont(font)
         self.qt_buttons[4].setObjectName("l1_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[5].setGeometry(QtCore.QRect(640, 320, 71, 31))
+        self.qt_buttons[5].setGeometry(QtCore.QRect(800, 720, 81, 41))
         self.qt_buttons[5].setFont(font)
         self.qt_buttons[5].setObjectName("r1_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[6].setGeometry(QtCore.QRect(90, 280, 71, 31))
+        self.qt_buttons[6].setGeometry(QtCore.QRect(80, 670, 81, 41))
         self.qt_buttons[6].setFont(font)
         self.qt_buttons[6].setObjectName("l2_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[7].setGeometry(QtCore.QRect(640, 280, 71, 31))
+        self.qt_buttons[7].setGeometry(QtCore.QRect(800, 670, 81, 41))
         self.qt_buttons[7].setFont(font)
         self.qt_buttons[7].setObjectName("r2_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[8].setGeometry(QtCore.QRect(285, 300, 31, 41))
+        self.qt_buttons[8].setGeometry(QtCore.QRect(200, 750, 41, 51))
         self.qt_buttons[8].setFont(font)
         self.qt_buttons[8].setObjectName("share_button")
 
         self.qt_buttons.append(QtWidgets.QPushButton(self.centralwidget))
-        self.qt_buttons[9].setGeometry(QtCore.QRect(485, 300, 31, 41))
+        self.qt_buttons[9].setGeometry(QtCore.QRect(720, 750, 41, 51))
         self.qt_buttons[9].setFont(font)
         self.qt_buttons[9].setObjectName("option_button")
 
-        self.line = QtWidgets.QFrame(self.centralwidget)
-        self.line.setGeometry(QtCore.QRect(50, 250, 700, 3))
-        self.line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
+        # 横線
+
+        self.line_1 = QtWidgets.QFrame(self.centralwidget)
+        self.line_1.setGeometry(QtCore.QRect(9, 640, 941, 20))
+        self.line_1.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_1.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_1.setObjectName("line")
+
+        self.line_2 = QtWidgets.QFrame(self.centralwidget)
+        self.line_2.setGeometry(QtCore.QRect(450, 460, 491, 20))
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
+
+        self.line_3 = QtWidgets.QFrame(self.centralwidget)
+        self.line_3.setGeometry(QtCore.QRect(450, 190, 491, 20))
+        self.line_3.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_3.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_3.setObjectName("line_3")
+
+        font = QtGui.QFont()
+        font.setPointSize(14)
 
         # 操作反転ボタン
         self.inverse_button = QtWidgets.QPushButton(self.centralwidget)
-        self.inverse_button.setGeometry(QtCore.QRect(530, 20, 111, 25))
+        self.inverse_button.setGeometry(QtCore.QRect(420, 710, 121, 41))
         self.inverse_button.setFont(font)
         self.inverse_button.setObjectName("inverse_button")
 
+        # ログCSV出力ボタン
+        self.csv_output_button = QtWidgets.QPushButton(self.centralwidget)
+        self.csv_output_button.setGeometry(QtCore.QRect(700, 410, 231, 41))
+        self.csv_output_button.setFont(font)
+        self.csv_output_button.setObjectName("csv_output_button")
+
         # 巻取ボタン
         self.windup_button = QtWidgets.QPushButton(self.centralwidget)
-        self.windup_button.setGeometry(QtCore.QRect(20, 170, 141, 61))
+        self.windup_button.setGeometry(QtCore.QRect(450, 570, 141, 61))
         self.windup_button.setFont(font)
         self.windup_button.setObjectName("windup_button")
 
         # 排出ボタン
         self.release_button = QtWidgets.QPushButton(self.centralwidget)
-        self.release_button.setGeometry(QtCore.QRect(20, 100, 141, 61))
+        self.release_button.setGeometry(QtCore.QRect(450, 490, 141, 61))
         self.release_button.setFont(font)
         self.release_button.setObjectName("release_button")
 
-        # ケーブル長セグメント
-        self.cable_length_segment = QtWidgets.QLCDNumber(self.centralwidget)
-        self.cable_length_segment.setGeometry(QtCore.QRect(20, 20, 141, 71))
-        self.cable_length_segment.setProperty("value", 0)
-        self.cable_length_segment.setObjectName("cable_length_segment")
-
         # タイマーリセットボタン
         self.timer_reset_button = QtWidgets.QPushButton(self.centralwidget)
-        self.timer_reset_button.setGeometry(QtCore.QRect(540, 210, 111, 25))
+        self.timer_reset_button.setGeometry(QtCore.QRect(770, 58, 171, 121))
         self.timer_reset_button.setFont(font)
         self.timer_reset_button.setObjectName("timer_reset_button")
 
-        # タイムラインリセットボタン
+        # ログラインリセットボタン
         self.log_reset_button = QtWidgets.QPushButton(self.centralwidget)
-        self.log_reset_button.setGeometry(QtCore.QRect(660, 210, 111, 25))
+        self.log_reset_button.setGeometry(QtCore.QRect(450, 410, 231, 41))
         self.log_reset_button.setFont(font)
         self.log_reset_button.setObjectName("log_reset_button")
 
+        # 前エレキャスモードラベル
+        self.elecas_forward_label = QtWidgets.QLabel(self.centralwidget)
+        self.elecas_forward_label.setGeometry(QtCore.QRect(340, 600, 101, 31))
+        self.elecas_forward_label.setFont(font)
+        self.elecas_forward_label.setObjectName("elecas_forward_label")
+
+        # 後エレキャスモードラベル
+        self.elecas_back_label = QtWidgets.QLabel(self.centralwidget)
+        self.elecas_back_label.setGeometry(QtCore.QRect(10, 600, 101, 31))
+        self.elecas_back_label.setFont(font)
+        self.elecas_back_label.setObjectName("elecas_back_label")
+
+        # 除染モードラベル
+        self.decon_mode_label = QtWidgets.QLabel(self.centralwidget)
+        self.decon_mode_label.setGeometry(QtCore.QRect(250, 20, 151, 31))
+        self.decon_mode_label.setFont(font)
+        self.decon_mode_label.setObjectName("decon_mode_label")
+
+        # 昇降モードラベル
+        self.rf_mode_label = QtWidgets.QLabel(self.centralwidget)
+        self.rf_mode_label.setGeometry(QtCore.QRect(30, 20, 171, 31))
+        self.rf_mode_label.setFont(font)
+        self.rf_mode_label.setObjectName("rf_mode_label")
+
+        # 制御モードラベル
+        self.control_mode_label = QtWidgets.QLabel(self.centralwidget)
+        self.control_mode_label.setGeometry(QtCore.QRect(430, 680, 101, 21))
+        self.control_mode_label.setFont(font)
+        self.control_mode_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.control_mode_label.setObjectName("control_mode_label")
+
+        # ケーブル長セグメント
+        self.cable_length_segment = QtWidgets.QLCDNumber(self.centralwidget)
+        self.cable_length_segment.setGeometry(QtCore.QRect(600, 490, 261, 141))
+        self.cable_length_segment.setProperty("value", 0)
+        self.cable_length_segment.setObjectName("cable_length_segment")
+
         # タイムライン
         self.timeline = QtWidgets.QTextBrowser(self.centralwidget)
-        self.timeline.setGeometry(QtCore.QRect(530, 70, 256, 131))
+        self.timeline.setGeometry(QtCore.QRect(451, 220, 481, 171))
         self.timeline.setObjectName("timeline")
 
         # タイマー
-        font.setPointSize(32)
-        font.setWeight(50)
+        font = QtGui.QFont()
+        font.setPointSize(77)
         self.running_timer = QtWidgets.QTimeEdit(self.centralwidget)
         self.running_timer.setFont(font)
-        self.running_timer.setGeometry(QtCore.QRect(655, 10, 131, 51))
+        self.running_timer.setAlignment(QtCore.Qt.AlignCenter)
+        self.running_timer.setGeometry(QtCore.QRect(460, 58, 301, 121))
         self.running_timer.setObjectName("running_timer")
 
+        # プログレスバー
+        self.timer_bar = QtWidgets.QProgressBar(self.centralwidget)
+        self.timer_bar.setGeometry(QtCore.QRect(460, 20, 481, 31))
+        self.timer_bar.setProperty("value", 0)
+        self.timer_bar.setFormat("")
+        self.timer_bar.setObjectName("timer_bar")
+
+        # cm
+        font = QtGui.QFont()
+        font.setPointSize(36)
+        self.cm_label = QtWidgets.QLabel(self.centralwidget)
+        self.cm_label.setGeometry(QtCore.QRect(870, 590, 61, 41))
+        self.cm_label.setFont(font)
+        self.cm_label.setObjectName("cm_label")
+
+        # ロボット画像
+        self.robot_image_label = QtWidgets.QLabel(self.centralwidget)
+        self.robot_image_label.setGeometry(QtCore.QRect(120, 80, 211, 551))
+        self.robot_image_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.robot_image_label.setObjectName("robot_image_label")
+
         self.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(self)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
-        self.menubar.setObjectName("menubar")
-        self.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
@@ -614,11 +694,19 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.qt_buttons[9].setText(self.translate("MainWindow", "OP"))
 
         self.running_timer.setDisplayFormat(self.translate("MainWindow", "mm:ss"))
-        self.timer_reset_button.setText(self.translate("MainWindow", "TimerReset"))
-        self.log_reset_button.setText(self.translate("MainWindow", "LogReset"))
-        self.windup_button.setText(self.translate("MainWindow", "巻取"))
-        self.release_button.setText(self.translate("MainWindow", "排出"))
+        self.timer_reset_button.setText(self.translate("MainWindow", "タイマーリセット"))
+        self.log_reset_button.setText(self.translate("MainWindow", "ログリセット"))
+        self.windup_button.setText(self.translate("MainWindow", "巻取（ー）"))
+        self.release_button.setText(self.translate("MainWindow", "排出（＋）"))
         self.inverse_button.setText(self.translate("MainWindow", "操作反転"))
+        self.csv_output_button.setText(self.translate("MainWindow", "CSV出力"))
+        self.control_mode_label.setText(self.translate("MainWindow", "前進モード"))
+        self.robot_image_label.setText(self.translate("MainWindow", "robot_image"))
+        self.elecas_back_label.setText(self.translate("MainWindow", "後足：格納"))
+        self.elecas_forward_label.setText(self.translate("MainWindow", "前足：格納"))
+        self.rf_mode_label.setText(self.translate("MainWindow", "昇降モード：メイン"))
+        self.decon_mode_label.setText(self.translate("MainWindow", "除染モード：手動"))
+        self.cm_label.setText(self.translate("MainWindow", "cm"))
 
 def ros_main(args=None):
 
