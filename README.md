@@ -8,7 +8,7 @@ $ git clone https://github.com/TsutsumiAkinosuke/hairo23_ws.git
 $ cd hairo23_ws
 $ . install/setup.bash
 $ cd src
-$ python3 operator.py
+$ python3 operator_node.py
 ```
 
 別のノードでJoyメッセージをパブリッシュすると押されたコントローラのボタンに反応してUI上のボタンの色が変わります  
