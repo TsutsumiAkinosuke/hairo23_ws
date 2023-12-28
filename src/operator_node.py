@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 
 import sys
+import os
 
 # sys.path.append("/home/akki/qt_ws/src/qt_sample/qt_sample/ui")
 # from sample_ui2 import Ui_MainWindow
@@ -244,6 +245,14 @@ class OperatorNode(QtWidgets.QMainWindow):
 
         self.pre_ls = self.ls
 
+        if self.ls.ls[self.LS_RF_MAIN_TOP] == True:
+            if self.ls.ls[self.LS_ELECAS_BACK_BOTTOM] == True:
+                self.robot_image_label.setPixmap(self.robot_ee_pixmap)
+            else:
+                self.robot_image_label.setPixmap(self.robot_es_pixmap)
+        else:
+            self.robot_image_label.setPixmap(self.robot_ss_pixmap)
+
     # タイマーリセットボタン押下時のコールバック
     def reset_timer(self):
 
@@ -374,6 +383,11 @@ class OperatorNode(QtWidgets.QMainWindow):
             self.elecas_forward_label.setText(self.translate("MainWindow", "前足：展開"))
         else:
             self.elecas_forward_label.setText(self.translate("MainWindow", "前足：格納"))
+        
+        if self.is_forward == True:
+            self.control_mode_label.setText(self.translate("MainWindow", "前進モード"))
+        else:
+            self.control_mode_label.setText(self.translate("MainWindow", "後進モード"))
     
     # def checkbutton_callback(self, state):
     #     if state == QtCore.Qt.Checked:
@@ -668,9 +682,13 @@ class OperatorNode(QtWidgets.QMainWindow):
         self.robot_image_label.setGeometry(QtCore.QRect(120, 80, 200, 550))
         self.robot_image_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.robot_image_label.setObjectName("robot_image_label")
-        self.robot_pixmap = QtGui.QPixmap("sample.png")
-        self.robot_pixmap = self.robot_pixmap.scaled(200, 550)
-        self.robot_image_label.setPixmap(self.robot_pixmap)
+        self.robot_ss_pixmap = QtGui.QPixmap(os.path.expanduser("~/hairo23_ws/src/robot_ss.png"))
+        self.robot_ss_pixmap = self.robot_ss_pixmap.scaled(200, 550)
+        self.robot_es_pixmap = QtGui.QPixmap(os.path.expanduser("~/hairo23_ws/src/robot_es.png"))
+        self.robot_es_pixmap = self.robot_es_pixmap.scaled(200, 550)
+        self.robot_ee_pixmap = QtGui.QPixmap(os.path.expanduser("~/hairo23_ws/src/robot_ee.png"))
+        self.robot_ee_pixmap = self.robot_ee_pixmap.scaled(200, 550)
+        self.robot_image_label.setPixmap(self.robot_ss_pixmap)
 
         self.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(self)
