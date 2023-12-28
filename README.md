@@ -3,6 +3,11 @@
 $ git clone https://github.com/TsutsumiAkinosuke/hairo23_ws.git
 ```
 
+操縦UIを起動するにはPyQt5をインストールする必要があります
+```
+pip install PyQt5
+```
+
 ## 使い方
 ```
 $ cd hairo23_ws
